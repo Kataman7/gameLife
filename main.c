@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HAUTEUR 92
-#define LARGEUR 253
+#define HAUTEUR 150*3
+#define LARGEUR 300*3
 
 #define RESET "\e[0m"
 #define BLACK "\e[0;90m"
@@ -100,28 +100,36 @@ void dessinerSymbole(struct Figure symbole, int *grille, int x, int y)
 
 void afficherGrille(int *grille)
 {
+    int x = 0, y = 0; // Initialisez x et y à 0 avant la boucle externe
     for (int i = (int)HAUTEUR / 3; i < HAUTEUR - (int)HAUTEUR / 3; i++)
     {
         for (int j = (int)LARGEUR / 3; j < LARGEUR - (int)LARGEUR / 3; j++)
         {
             if (getCase(grille, j, i) > 0)
             {
-                printf(WHITE "X " RESET);
+                attron(COLOR_PAIR(2));
+                mvprintw(y, x, "X");
+                attroff(COLOR_PAIR(2));
             }
             else
             {
-                printf(BLACK ". " RESET);
+                attron(COLOR_PAIR(1));
+                mvprintw(y, x, "X");
+                attroff(COLOR_PAIR(1));
             }
+            x += 2;
         }
-        printf("\n");
+        y++;
+        x = 0;
     }
+    refresh();
 }
+
 
 int main(int argc, char *argv[])
 {
     float speed = 1;
-    if (argc > 0)
-        speed = atof(argv[1]);
+    if (argc > 1) speed = atof(argv[1]);
 
     int *grille = calloc(HAUTEUR * LARGEUR, sizeof(int));
     int *grilleVoisin = calloc(HAUTEUR * LARGEUR, sizeof(int));
@@ -148,13 +156,21 @@ int main(int argc, char *argv[])
     dessinerSymbole(line, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
 
     int run = 1;
+    int play = 1;
+
+    initscr();
+    cbreak();
+    noecho();
+    start_color();
+
+    init_pair(1, COLOR_BLACK, COLOR_BLACK); // Noir sur noir
+    init_pair(2, COLOR_WHITE, COLOR_BLACK); // Blanc sur noir
 
     while (run == 1)
     {
-        system("clear");
         afficherGrille(grille);
         updateGrilleVoisin(grille, grilleVoisin);
-        updateGrille(conway, grille, grilleVoisin);
+        updateGrille(maze, grille, grilleVoisin);
         usleep(1000 * 1000 * speed);
     }
 
