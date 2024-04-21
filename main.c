@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HAUTEUR 100
-#define LARGEUR 250
+int HAUTEUR = 1;
+int LARGEUR = 1;
 
 struct Figure
 {
@@ -125,8 +125,29 @@ int main(int argc, char *argv[])
 {
     float speed = 1;
     int autoplay = 1;
-    if (argc > 1) speed = atof(argv[1]);
-    if (argc > 2 ) autoplay = atoi(argv[2]);
+    if (argc > 1)
+        speed = atof(argv[1]);
+    if (argc > 2)
+        autoplay = atoi(argv[2]);
+    if (argc > 3)
+        autoplay = atoi(argv[3]);
+
+    int run = 1;
+    int play = 1;
+
+    initscr();
+    cbreak();
+    noecho();
+    start_color();
+    nodelay(stdscr, autoplay);
+
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+    HAUTEUR = (maxY + maxY * 2/3)*2;
+    LARGEUR = maxX + maxY * 2/3;
+
+    init_pair(1, COLOR_BLACK, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
     int *grille = calloc(HAUTEUR * LARGEUR, sizeof(int));
     int *grilleVoisin = calloc(HAUTEUR * LARGEUR, sizeof(int));
@@ -145,24 +166,15 @@ int main(int argc, char *argv[])
     struct Figure line = {10, 1, g2};
     dessinerSymbole(line, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
 
-    int run = 1;
-    int play = 1;
-
-    initscr();
-    cbreak();
-    noecho();
-    start_color();
-    nodelay(stdscr, autoplay);
-
-    init_pair(1, COLOR_BLACK, COLOR_BLACK); 
-    init_pair(2, COLOR_WHITE, COLOR_BLACK);
-
     while (run == 1)
     {
         int ch = getch();
-        if (ch == ' ' && autoplay != 0) play = !play;
-        else if (ch == 'q') run = 0;
-        else if (ch == 'p') {
+        if (ch == ' ' && autoplay != 0)
+            play = !play;
+        else if (ch == 'q')
+            run = 0;
+        else if (ch == 'p')
+        {
             autoplay = !autoplay;
             nodelay(stdscr, autoplay);
         }
@@ -172,7 +184,8 @@ int main(int argc, char *argv[])
             afficherGrille(grille);
             updateGrilleVoisin(grille, grilleVoisin);
             updateGrille(maze, grille, grilleVoisin);
-            if(autoplay != 0) usleep(1000 * 1000 * speed);
+            if (autoplay != 0)
+                usleep(1000 * 1000 * speed);
         }
     }
 
