@@ -5,12 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HAUTEUR 150*3
-#define LARGEUR 300*3
-
-#define RESET "\e[0m"
-#define BLACK "\e[0;90m"
-#define WHITE "\e[0;97m"
+#define HAUTEUR 100
+#define LARGEUR 250
 
 struct Figure
 {
@@ -100,7 +96,7 @@ void dessinerSymbole(struct Figure symbole, int *grille, int x, int y)
 
 void afficherGrille(int *grille)
 {
-    int x = 0, y = 0; // Initialisez x et y à 0 avant la boucle externe
+    int x = 0, y = 0;
     for (int i = (int)HAUTEUR / 3; i < HAUTEUR - (int)HAUTEUR / 3; i++)
     {
         for (int j = (int)LARGEUR / 3; j < LARGEUR - (int)LARGEUR / 3; j++)
@@ -114,7 +110,7 @@ void afficherGrille(int *grille)
             else
             {
                 attron(COLOR_PAIR(1));
-                mvprintw(y, x, "X");
+                mvprintw(y, x, " ");
                 attroff(COLOR_PAIR(1));
             }
             x += 2;
@@ -125,11 +121,12 @@ void afficherGrille(int *grille)
     refresh();
 }
 
-
 int main(int argc, char *argv[])
 {
     float speed = 1;
+    int autoplay = 1;
     if (argc > 1) speed = atof(argv[1]);
+    if (argc > 2 ) autoplay = atoi(argv[2]);
 
     int *grille = calloc(HAUTEUR * LARGEUR, sizeof(int));
     int *grilleVoisin = calloc(HAUTEUR * LARGEUR, sizeof(int));
@@ -139,14 +136,7 @@ int main(int argc, char *argv[])
     struct Regle conway = {2, 3, 3};
     struct Regle test = {2, 4, 2};
 
-    /*
-     1,0,1,0,0,
-        1,0,1,0,1,
-        1,0,1,0,1,
-        0,1,0,1,1,
-    */
-
-    int g[] = { 1,0,1,0,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1};
+    int g[] = {1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1};
     struct Figure laby = {5, 5, g};
     dessinerSymbole(laby, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
 
@@ -162,20 +152,34 @@ int main(int argc, char *argv[])
     cbreak();
     noecho();
     start_color();
+    nodelay(stdscr, autoplay);
 
-    init_pair(1, COLOR_BLACK, COLOR_BLACK); // Noir sur noir
-    init_pair(2, COLOR_WHITE, COLOR_BLACK); // Blanc sur noir
+    init_pair(1, COLOR_BLACK, COLOR_BLACK); 
+    init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
     while (run == 1)
     {
-        afficherGrille(grille);
-        updateGrilleVoisin(grille, grilleVoisin);
-        updateGrille(maze, grille, grilleVoisin);
-        usleep(1000 * 1000 * speed);
+        int ch = getch();
+        if (ch == ' ' && autoplay != 0) play = !play;
+        else if (ch == 'q') run = 0;
+        else if (ch == 'p') {
+            autoplay = !autoplay;
+            nodelay(stdscr, autoplay);
+        }
+
+        if (play)
+        {
+            afficherGrille(grille);
+            updateGrilleVoisin(grille, grilleVoisin);
+            updateGrille(maze, grille, grilleVoisin);
+            if(autoplay != 0) usleep(1000 * 1000 * speed);
+        }
     }
 
     free(grille);
     free(grilleVoisin);
+
+    endwin();
 
     return 0;
 }
