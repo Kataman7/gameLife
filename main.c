@@ -110,7 +110,7 @@ void afficherGrille(int *grille)
             else
             {
                 attron(COLOR_PAIR(1));
-                mvprintw(y, x, " ");
+                mvprintw(y, x, "O");
                 attroff(COLOR_PAIR(1));
             }
             x += 2;
@@ -119,6 +119,33 @@ void afficherGrille(int *grille)
         x = 0;
     }
     refresh();
+}
+
+void handle_mouse_click(int *grille, MEVENT event)
+{
+    int x = event.x / 2 + (int)LARGEUR / 3;
+    int y = event.y + (int)HAUTEUR / 3;
+
+    if (x >= 0 && x < LARGEUR && y >= 0 && y < HAUTEUR)
+    {
+        setCase(grille, x, y, !getCase(grille, x, y));
+        int drawX = (x - (int)LARGEUR / 3) * 2;
+        int drawY = y - (int)HAUTEUR / 3;
+
+        if (getCase(grille, x, y) > 0)
+        {
+            attron(COLOR_PAIR(2));
+            mvprintw(drawY, drawX, "X");
+            attroff(COLOR_PAIR(2));
+        }
+        else
+        {
+            attron(COLOR_PAIR(1));
+            mvprintw(drawY, drawX, "O");
+            attroff(COLOR_PAIR(1));
+        }
+        refresh();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -133,20 +160,23 @@ int main(int argc, char *argv[])
         autoplay = atoi(argv[3]);
 
     int run = 1;
-    int play = 1;
+    int play = 0;
 
     initscr();
     cbreak();
     noecho();
     start_color();
     nodelay(stdscr, autoplay);
+    keypad(stdscr, TRUE);
+    mousemask(BUTTON1_CLICKED | REPORT_MOUSE_POSITION | BUTTON1_PRESSED, NULL);
 
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
-    HAUTEUR = (maxY + maxY * 2/3)*2;
-    LARGEUR = maxX + maxY * 2/3;
+    HAUTEUR = (maxY + maxY * 2 / 3) * 2;
+    LARGEUR = maxX + maxY * 2 / 3;
 
-    init_pair(1, COLOR_BLACK, COLOR_BLACK);
+    init_color(1, 200, 200, 200);
+    init_pair(1, 1, COLOR_BLACK);
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
     int *grille = calloc(HAUTEUR * LARGEUR, sizeof(int));
@@ -157,17 +187,21 @@ int main(int argc, char *argv[])
     struct Regle conway = {2, 3, 3};
     struct Regle test = {2, 4, 2};
 
-    int g[] = {1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1};
-    struct Figure laby = {5, 5, g};
-    dessinerSymbole(laby, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
-
-    int g2[] = {
-        1, 1, 0, 0, 0, 0, 0, 0, 0, 1};
-    struct Figure line = {10, 1, g2};
+    
+        int g2[] = {
+        0, 1, 0,
+        1, 1, 1,
+        0, 1, 0};
+    struct Figure line = {3, 3, g2};
     dessinerSymbole(line, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
+    
 
+    afficherGrille(grille);
+
+    MEVENT event;
     while (run == 1)
     {
+
         int ch = getch();
         if (ch == ' ' && autoplay != 0)
             play = !play;
@@ -183,16 +217,21 @@ int main(int argc, char *argv[])
         {
             afficherGrille(grille);
             updateGrilleVoisin(grille, grilleVoisin);
-            updateGrille(maze, grille, grilleVoisin);
+            updateGrille(conway, grille, grilleVoisin);
             if (autoplay != 0)
                 usleep(1000 * 1000 * speed);
+        }
+        else if (ch == KEY_MOUSE && getmouse(&event) == OK)
+        {
+            if (event.bstate & BUTTON1_CLICKED)
+            {
+                handle_mouse_click(grille, event);
+            }
         }
     }
 
     free(grille);
     free(grilleVoisin);
-
     endwin();
-
     return 0;
 }
