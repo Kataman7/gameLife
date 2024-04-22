@@ -148,12 +148,73 @@ void handle_mouse_click(int *grille, MEVENT event)
     }
 }
 
+/*
+void saveFile(int ch, int *grille)
+{
+    char *nom = malloc(30 * sizeof(char));
+    int i = 0;
+
+    nodelay(stdscr, 0);
+    mvprintw(4, LARGEUR * 0.75, "Save name :   ");
+    refresh();
+
+    do
+    {
+        ch = getch();
+
+        if (ch == '\a' && i > 0)
+        {
+            nom[i] = '\0';
+            i--;
+        }
+        nom[i] = ch;
+        i++;
+        mvprintw(5, LARGEUR * 0.75, nom);
+        refresh();
+    } while (i > 0 && ch != '\n' && i < 29);
+    nom[i - 1] = '\0';
+
+    char *data = malloc((HAUTEUR * LARGEUR + 4) * sizeof(char));
+    //sprintf(data, "%d ", LARGEUR);
+    //sprintf(data + strlen(data), "%d ", HAUTEUR);
+
+    for (int y = 0; y < HAUTEUR; y++)
+    {
+        for (int x = 0; x < LARGEUR; x++)
+        {
+            sprintf(data + strlen(data), "%d ", getCase(grille, x, y));
+        }
+    }
+
+    FILE *file = fopen(nom, "w");
+    fputs(data, file);
+    fclose(file);
+    mvprintw(4, LARGEUR * 0.75, "Save completed"); // 14
+    refresh();
+    free(nom);
+    free(data);
+}
+*/
+
 int main(int argc, char *argv[])
 {
+    
+    struct Regle maze = {1, 5, 3};
+    struct Regle conway = {2, 3, 3};
+    struct Regle test = {2, 4, 2};
+    
     float speed = 1;
     int autoplay = 1;
-    if (argc > 1)
-        speed = atof(argv[1]);
+    char* filename = "unnamed";
+    struct Regle regle = conway;
+
+    if (argc > 1) speed = atof(argv[1]);
+    if (argc > 2) filename = argv[2];
+    if (argc > 3) {
+        if (strcmp(argv[3], "maze") == 0) regle = maze;
+        else if (strcmp(argv[3], "test") == 0) regle = test;
+    }
+
 
     int run = 1;
     int play = 0;
@@ -178,11 +239,6 @@ int main(int argc, char *argv[])
     int *grille = calloc(HAUTEUR * LARGEUR, sizeof(int));
     int *grilleVoisin = calloc(HAUTEUR * LARGEUR, sizeof(int));
 
-    // min max naissance
-    struct Regle maze = {1, 5, 3};
-    struct Regle conway = {2, 3, 3};
-    struct Regle test = {2, 4, 2};
-
     int g2[] = {
         0, 1, 0,
         1, 1, 1,
@@ -191,7 +247,7 @@ int main(int argc, char *argv[])
     dessinerSymbole(line, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
 
     afficherGrille(grille);
-    
+
     mvprintw(0, LARGEUR * 0.75, "waiting");
     refresh();
 
@@ -200,7 +256,7 @@ int main(int argc, char *argv[])
     {
 
         int ch = getch();
-        
+
         if (ch == KEY_MOUSE && getmouse(&event) == OK)
         {
             if (event.bstate & BUTTON1_CLICKED)
@@ -211,8 +267,10 @@ int main(int argc, char *argv[])
         else if (ch == ' ' && autoplay != 0)
         {
             play = !play;
-            if (play == 1) mvprintw(0, LARGEUR * 0.75, "running");
-            else mvprintw(0, LARGEUR * 0.75, "waiting");
+            if (play == 1)
+                mvprintw(0, LARGEUR * 0.75, "running");
+            else
+                mvprintw(0, LARGEUR * 0.75, "waiting");
         }
         else if (ch == 'q')
             run = 0;
@@ -220,20 +278,26 @@ int main(int argc, char *argv[])
         {
             autoplay = !autoplay;
             nodelay(stdscr, autoplay);
-            if (autoplay != 1) {
+            if (autoplay != 1)
+            {
                 mvprintw(0, LARGEUR * 0.75, "manual ");
                 play = 1;
             }
-            else {
+            else
+            {
                 mvprintw(0, LARGEUR * 0.75, "waiting");
                 play = 0;
             }
+        }
+        else if (ch == 's')
+        {
+            //saveFile(ch, grille);
         }
 
         if (play && ch != KEY_MOUSE && ch != 'p')
         {
             updateGrilleVoisin(grille, grilleVoisin);
-            updateGrille(conway, grille, grilleVoisin);
+            updateGrille(regle, grille, grilleVoisin);
             afficherGrille(grille);
             if (autoplay != 0)
                 usleep(1000 * 1000 * speed);
