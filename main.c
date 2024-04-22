@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 int HAUTEUR = 1;
 int LARGEUR = 1;
@@ -148,6 +149,17 @@ void handle_mouse_click(int *grille, MEVENT event)
     }
 }
 
+void soup(int *grille, double chance) {
+
+    srand(time(NULL));
+
+    for (int i = 0; i < HAUTEUR*LARGEUR; i++)
+    {
+        if (((double) rand() / RAND_MAX) > chance) grille[i] = 0;
+        else grille[i] = 1;
+    }   
+}
+
 /*
 void saveFile(int ch, int *grille)
 {
@@ -202,17 +214,24 @@ int main(int argc, char *argv[])
     struct Regle maze = {1, 5, 3};
     struct Regle conway = {2, 3, 3};
     struct Regle test = {2, 4, 2};
+    struct Regle donjon2 = {4, 9, 5};
+    struct Regle cave = {3, 10, 5};
     
     float speed = 1;
     int autoplay = 1;
     char* filename = "unnamed";
     struct Regle regle = conway;
+    double chance = 0;
 
     if (argc > 1) speed = atof(argv[1]);
     if (argc > 2) filename = argv[2];
     if (argc > 3) {
         if (strcmp(argv[3], "maze") == 0) regle = maze;
         else if (strcmp(argv[3], "test") == 0) regle = test;
+        else if (strcmp(argv[3], "cave") == 0) regle = cave;
+    }
+    if (argc > 4) {
+        chance = strtod(argv[4], NULL);
     }
 
 
@@ -246,6 +265,7 @@ int main(int argc, char *argv[])
     struct Figure line = {3, 3, g2};
     dessinerSymbole(line, grille, (int)LARGEUR / 2 - 5, (int)HAUTEUR / 2 - 5);
 
+    if (chance != 0) soup(grille, chance);
     afficherGrille(grille);
 
     mvprintw(0, LARGEUR * 0.75, "waiting");
@@ -292,6 +312,11 @@ int main(int argc, char *argv[])
         else if (ch == 's')
         {
             //saveFile(ch, grille);
+        }
+        else if (ch == 'r')
+        {
+            soup(grille, chance);
+            afficherGrille(grille);
         }
 
         if (play && ch != KEY_MOUSE && ch != 'p')
